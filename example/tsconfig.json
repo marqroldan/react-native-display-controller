@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@marqroldan/react-native-overlay": ["../src/index"],
+      "@marqroldan/react-native-overlay/*": ["../src/*"]
+    }
+  }
+}

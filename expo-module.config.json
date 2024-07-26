@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "tvos", "android", "web"],
+  "ios": {
+    "modules": ["RNOverlayModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.marqroldanreactnativeoverlay.RNOverlayModule"]
+  }
+}

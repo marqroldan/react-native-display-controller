@@ -1,0 +1,42 @@
+{
+  "name": "@marqroldan/react-native-overlay",
+  "version": "0.1.0",
+  "description": "Generic Overlay System in TypeScript",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module",
+    "open:ios": "xed example/ios",
+    "open:android": "open -a \"Android Studio\" example/android"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "@marqroldan/react-native-overlay",
+    "RNOverlay"
+  ],
+  "repository": "https://github.com/marqroldan/react-native-overlay",
+  "bugs": {
+    "url": "https://github.com/marqroldan/react-native-overlay/issues"
+  },
+  "author": "Marq Roldan <hcmlroldan@gmail.com> (https://github.com/marqroldan)",
+  "license": "MIT",
+  "homepage": "https://github.com/marqroldan/react-native-overlay#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.0.25",
+    "expo-module-scripts": "^3.5.2",
+    "expo-modules-core": "^1.12.19"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
