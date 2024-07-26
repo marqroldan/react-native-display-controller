@@ -5,7 +5,7 @@ import * as RNOverlay from '@marqroldan/react-native-overlay';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>{RNOverlay.hello()}</Text>
+      <Text><RNOverlay.Hello/></Text>
     </View>
   );
 }
