@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import * as RNOverlay from '@marqroldan/react-native-overlay';
+import {Overlay} from '@marqroldan/react-native-overlay';
 
 function HomeScreen() {
   return (
