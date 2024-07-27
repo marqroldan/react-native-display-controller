@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import * as RNOverlay from '@marqroldan/react-native-overlay';
+import {Overlay} from '@marqroldan/react-native-overlay';
 
 export default function App() {
   return (
