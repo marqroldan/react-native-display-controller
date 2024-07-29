@@ -21,13 +21,13 @@
     "@marqroldan/react-native-display-controller",
     "RNOverlay"
   ],
-  "repository": "https://github.com/marqroldan/react-native-overlay",
+  "repository": "https://github.com/marqroldan/react-native-display-controller",
   "bugs": {
-    "url": "https://github.com/marqroldan/react-native-overlay/issues"
+    "url": "https://github.com/marqroldan/react-native-display-controller/issues"
   },
   "author": "Marq Roldan <hcmlroldan@gmail.com> (https://github.com/marqroldan)",
   "license": "MIT",
-  "homepage": "https://github.com/marqroldan/react-native-overlay#readme",
+  "homepage": "https://github.com/marqroldan/react-native-display-controller#readme",
   "devDependencies": {
     "@types/react": "^18.0.25",
     "expo-module-scripts": "^3.5.2",
