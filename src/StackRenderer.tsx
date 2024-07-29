@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 
 import { DisplayHolderIDContext, DisplayHolderStackContext } from "./contexts";
 function DefaultRenderer(props: any) {
-  const Component = props.component;
+  const Component = props.component ?? React.Fragment;
   return (
     <View style={StyleSheet.absoluteFill}>
       <Component />
