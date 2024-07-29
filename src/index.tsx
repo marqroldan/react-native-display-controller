@@ -3,86 +3,110 @@ import React, {
   useState,
   createContext,
   useEffect,
+  useContext,
+  useRef,
   useMemo,
-  useContext, createRef, useRef
 } from "react";
 
-const OverlayTrailContext = createContext(["root"]);
+import { uuid } from "./utils";
+
+const OverlayTrailContext = createContext<string[]>([]);
 const StackContext = createContext([]);
 const StackScrimContext = createContext(false);
 const OverlayActionsContext = createContext({
-  registerSelf: (name: string, listener: () => void) => {},
+  bubble: (from: string, data: any) => {},
+  register: (name: string, trail: string[]) => () => {},
   show: (target: string, data: any) => {},
 });
-
-function useOverlayController(nodeName: string) {
-  const [stack, setStack] = useState([]);
-
-  useEffect(() => {
-    return registerSelf(nodeName, (data) => {
-      setStack((prevStack) => {
-        const newStack = prevStack.slice();
-
-        newStack.push(data);
-        return newStack;
-      });
-    });
-  }, []);
-
-
-  const shouldShowStackScrim = stack.some((a) => a.showStackScrim);
-
-
-  return {
-    stack;
-  }
-}
+const ControllerDataContext = createContext({});
 
 type HolderProps = {
-  name: string;
-  ScrimComponent: (() => ReactNode) | ComponentClass<any>;
+  name?: string;
+  ScrimComponent?: (() => ReactNode) | ComponentClass<any>;
 };
-function Holder(props: PropsWithChildren<HolderProps>) {
+
+export function Holder(props: PropsWithChildren<HolderProps>) {
+  const holderID = useMemo(() => {
+    return props.name ?? uuid();
+  }, [props.name]);
+
+  /////// this is so you know the parent
   const trail = useContext(OverlayTrailContext);
   const newTrail = useMemo(() => {
     const _trail = trail.slice();
-    _trail.push(props.name);
+    _trail.push(holderID);
     return _trail;
-  }, [trail]);
+  }, [trail, holderID]);
+
+  const { register, bubble } = useContext(OverlayActionsContext);
+  const controller = useContext(ControllerDataContext);
+  const parentStack = controller[holderID];
 
   const shouldAccept = useRef(false);
-
-
-  const { registerSelf, notifier } = useOverlayController(props.name);
-  const [stack, setStack] = useState([]);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [localStack, setStack] = useState<any[]>([]);
 
   useEffect(() => {
-    const remove = registerSelf(props.name, (data) => {
-      if(!shouldAccept.current) {
-        return;
-      }
-      setStack((prevStack) => {
-        const newStack = prevStack.slice();
+    const deregister = register(props.name, trail);
+    setIsRegistered(true);
 
-        newStack.push(data);
-        return newStack;
-      });
-    });
     return () => {
       shouldAccept.current = false;
-      remove();
+      deregister();
+      setStack([]);
+    };
+  }, [trail]);
+
+  /// when coming from above
+  useEffect(() => {
+    if (!shouldAccept.current || !isRegistered || parentStack.length <= 0) {
+      return;
     }
-  }, []);
 
+    const timeout = setTimeout(() => {
+      setStack((prevStack) => {
+        return prevStack.concat(parentStack);
+      });
+    }, 600);
 
-  const shouldShowStackScrim = stack.some((a) => a.showStackScrim);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [isRegistered, parentStack]);
 
+  /// when directly talking
+  const holderActions = useMemo(() => {
+    return {
+      push: (data: any) => {
+        if (shouldAccept.current) {
+          /// add it to current stack
+          setStack((prevStack) => {
+            const newStack = prevStack.slice();
+            newStack.push(data);
+            return newStack;
+          });
+        } else {
+          /// bubble up to parent
+          bubble(holderID, data);
+        }
+      },
+      pop: () => {
+        /// remove last item
+        setStack((prevStack) => {
+          const newStack = prevStack.slice();
+          newStack.pop();
+          return newStack;
+        });
+      },
+    };
+  }, [holderID]);
 
+  const shouldShowStackScrim = localStack.some((a) => a.showStackScrim);
 
   return (
     <OverlayTrailContext.Provider value={newTrail}>
       <StackScrimContext.Provider value={shouldShowStackScrim}>
-        <StackContext.Provider value={stack}>
+        <StackContext.Provider value={localStack}>
           {props.children}
         </StackContext.Provider>
       </StackScrimContext.Provider>
@@ -92,81 +116,116 @@ function Holder(props: PropsWithChildren<HolderProps>) {
 
 const RootStart = ["root"];
 
-function OverlayController(props) {
-  const [holders, setHolders] = useState({});
-  const [data, setData] = useState({});
+export class OverlayController extends React.Component<PropsWithChildren<any>> {
+  //// static
+  static show = () => {};
 
-  const flags = useRef<Record<string, boolean>>({})
+  //// instance
+  state = {
+    holders: {},
+    data: {},
+  };
+  flags = {};
 
-  const actions = useMemo(() => {
-    return {
-      shouldAcceptNotifier: (name, value) => {
-        flags.current[name] = value;
-      },
-      registerSelf: (name, listener) => {
-        setHolders((prevHolders) => {
-          const newData = {
-            ...prevHolders,
-          };
+  show = (target: string, data: any) => {
+    let finalTarget = target;
+    if (!this.flags[target]) {
+      /// check if holder is still available
+      const parent = this.state.holders[target]?.at?.(-1);
+      if (!parent) {
+        finalTarget = "root";
+      } else {
+        finalTarget = parent;
+      }
+    }
 
-          if (!newData[name]) {
-            newData[name] = [];
-          } else {
-            newData[name] = newData[name].slice();
-          }
+    this.setState((prevState) => {
+      const newData = {
+        ...prevState.data,
+      };
 
-          newData[name].push(listener);
+      if (!newData[finalTarget]) {
+        newData[finalTarget] = [];
+      } else {
+        newData[finalTarget] = newData[finalTarget].slice();
+      }
 
-          flags.current[name] = true;
-          return newData;
-        });
-        return () => {
-          flags.current[name] = false;
-          setHolders((prevHolders) => {
-            if (!prevHolders[name] || prevHolders[name]?.length === 0) {
-              return prevHolders;
-            }
+      newData[finalTarget].push(data);
+      return {
+        data: newData,
+      };
+    });
+  };
 
-            return {
-              ...prevHolders,
-              [name]: prevHolders[name].filter((a) => a !== listener),
-            };
-          });
-        };
-      },
-      show: (target: string, data: any) => {
-        setData((prevData) => {
-          const newData = {
-            ...prevData,
-          };
+  register = (name, trail) => {
+    this.setState((prevState) => {
+      const newHolders = {
+        ...prevState.holders,
+      };
+      if (!newHolders[name]) {
+        newHolders[name] = [];
+      } else {
+        newHolders[name] = newHolders[name].slice();
+      }
 
-          if (!newData[target]) {
-            newData[target] = [];
-          } else {
-            newData[target] = newData[target].slice();
-          }
+      newHolders[name].push(trail);
 
-          newData[target].push(data);
-        });
-      },
-    };
-  }, []);
+      this.flags[name] = true;
+      return {
+        holders: newHolders,
+      };
+    });
 
-  //// check the data and see if there's a listener, filter if it's not meant to fallback
-  useEffect(() => {
-    const debouncer = setTimeout(() => {
-      ////
-    }, 600);
     return () => {
-      clearTimeout(debouncer);
-    };
-  }, [data]);
+      this.flags[name] = false;
 
-  return (
-    <OverlayTrailContext.Provider value={RootStart}>
-      <OverlayActionsContext.Provider value={actions}>
-        {props.children}
-      </OverlayActionsContext.Provider>
-    </OverlayTrailContext.Provider>
-  );
+      this.setState((prevState) => {
+        const newHolders = {
+          ...prevState.holders,
+        };
+        delete newHolders[name];
+
+        return {
+          holders: newHolders,
+        };
+      });
+    };
+  };
+
+  bubble = (from: string, data: any) => {
+    const holders = this.state.holders;
+    let nextTarget = "root";
+    if (holders[from]?.length) {
+      nextTarget = holders[from].at(-1)!;
+    }
+    this.show(nextTarget, data);
+  };
+
+  actions = {
+    show: this.show,
+    bubble: this.bubble,
+    register: this.register,
+  };
+
+  componentDidMount() {
+    OverlayController.show = this.show;
+  }
+
+  componentDidUpdate(
+    prevProps: Readonly<React.PropsWithChildren<any>>,
+    prevState: Readonly<object>,
+    snapshot?: any,
+  ) {
+    ///
+  }
+
+  render() {
+    return (
+      <OverlayTrailContext.Provider value={RootStart}>
+        <OverlayActionsContext.Provider value={this.actions}>
+          {this.props.children}
+        </OverlayActionsContext.Provider>
+      </OverlayTrailContext.Provider>
+    );
+  }
 }
