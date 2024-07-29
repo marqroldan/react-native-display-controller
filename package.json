@@ -41,5 +41,6 @@
     "react": "*",
     "react-native": "*",
     "react-native-reanimated": "*"
-  }
+  },
+  "private": false
 }
