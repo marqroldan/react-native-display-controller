@@ -6,7 +6,7 @@ import { DisplayHolderScrimContext } from "./contexts";
 
 const style = [StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.4)" }];
 
-export function DisplayControllerScrim(props: PropsWithChildren<any>) {
+export function DisplayHolderScrim(props: PropsWithChildren<any>) {
   const shouldShow = useContext(DisplayHolderScrimContext);
 
   if (!shouldShow) {

@@ -19,6 +19,7 @@ type HolderProps = {
 
 const DefaultStartingPoint = "root";
 
+
 export function Holder(props: PropsWithChildren<HolderProps>) {
   const trail = useContext(DisplayControllerTrailContext);
   const holderID = useMemo(() => {
@@ -51,6 +52,7 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
   useEffect(() => {
     const deregister = register(holderID, trail);
     setIsRegistered(true);
+    shouldAccept.current = true;
 
     return () => {
       shouldAccept.current = false;
@@ -62,15 +64,19 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
 
   /// when coming from above
   useEffect(() => {
-    if (!shouldAccept.current || !isRegistered || parentStack.length <= 0) {
+    if (!shouldAccept.current || !isRegistered || parentStack?.length <= 0) {
       return;
     }
 
     const timeout = setTimeout(() => {
       setStack((prevStack) => {
-        return prevStack.concat(parentStack);
+        if(parentStack?.length) {
+          return prevStack.concat(parentStack);
+        } else {
+          return prevStack;
+        }
       });
-    }, 600);
+    }, 16.67 * 2);
 
     return () => {
       clearTimeout(timeout);
@@ -130,7 +136,7 @@ export class OverlayController extends React.Component<
   }
 > {
   //// static
-  static show = () => {};
+  static show = (...args: any[]) => {};
 
   //// instance
   state = {
@@ -249,3 +255,6 @@ export class OverlayController extends React.Component<
     );
   }
 }
+
+export * from "./StackRenderer";
+export * from "./Scrim";

@@ -1,17 +1,18 @@
 import React, { useContext } from "react";
 import { StyleSheet, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { DisplayHolderIDContext, DisplayHolderStackContext } from "./contexts";
 function DefaultRenderer(props: any) {
   const Component = props.component ?? React.Fragment;
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <Animated.View style={StyleSheet.absoluteFill} entering={FadeIn} exiting={FadeOut}>
       <Component />
-    </View>
+    </Animated.View>
   );
 }
 
-export function StackRenderer() {
+export function DisplayHolderStackRenderer() {
   const stack = useContext(DisplayHolderStackContext);
   const holderID = useContext(DisplayHolderIDContext);
 
