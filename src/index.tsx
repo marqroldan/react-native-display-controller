@@ -8,6 +8,7 @@ import {
   DisplayControllerDataContext,
   DisplayHolderScrimContext,
   DisplayHolderActionsContext,
+  DisplayHolderIDContext,
 } from "./contexts";
 import { uuid } from "./utils";
 
@@ -106,15 +107,17 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
   const shouldShowStackScrim = localStack.some((a) => a.showStackScrim);
 
   return (
-    <DisplayControllerTrailContext.Provider value={newTrail}>
-      <DisplayHolderScrimContext.Provider value={shouldShowStackScrim}>
-        <DisplayHolderStackContext.Provider value={localStack}>
-          <DisplayHolderActionsContext.Provider value={actions}>
-            {props.children}
-          </DisplayHolderActionsContext.Provider>
-        </DisplayHolderStackContext.Provider>
-      </DisplayHolderScrimContext.Provider>
-    </DisplayControllerTrailContext.Provider>
+    <DisplayHolderIDContext.Provider value={holderID}>
+      <DisplayControllerTrailContext.Provider value={newTrail}>
+        <DisplayHolderScrimContext.Provider value={shouldShowStackScrim}>
+          <DisplayHolderStackContext.Provider value={localStack}>
+            <DisplayHolderActionsContext.Provider value={actions}>
+              {props.children}
+            </DisplayHolderActionsContext.Provider>
+          </DisplayHolderStackContext.Provider>
+        </DisplayHolderScrimContext.Provider>
+      </DisplayControllerTrailContext.Provider>
+    </DisplayHolderIDContext.Provider>
   );
 }
 

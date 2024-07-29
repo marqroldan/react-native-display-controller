@@ -15,3 +15,4 @@ export const DisplayControllerTrailContext = createContext<null | string[]>(
 export const DisplayHolderActionsContext = createContext({});
 export const DisplayHolderStackContext = createContext([]);
 export const DisplayHolderScrimContext = createContext(false);
+export const DisplayHolderIDContext = createContext("");
