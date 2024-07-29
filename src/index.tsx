@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode, ComponentClass } from "react";
 import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
+import {TextInput} from 'react-natve';
 
 import {
   DisplayControllerTrailContext,
@@ -158,6 +159,8 @@ export class OverlayController extends React.Component<
       }
     }
 
+    const input = TextInput.State.currentlyFocusedInput();
+
     this.setState((prevState) => {
       const newData = {
         ...prevState.data,
@@ -169,7 +172,12 @@ export class OverlayController extends React.Component<
         newData[finalTarget] = newData[finalTarget].slice();
       }
 
-      newData[finalTarget].push(data);
+      newData[finalTarget].push({
+        ...data,
+        __internal: {
+          lastFocusedInput: input,
+        }
+      });
       return {
         data: newData,
       };
