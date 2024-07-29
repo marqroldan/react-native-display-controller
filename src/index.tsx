@@ -1,45 +1,46 @@
 import type { PropsWithChildren, ReactNode, ComponentClass } from "react";
-import React, {
-  useState,
-  createContext,
-  useEffect,
-  useContext,
-  useRef,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
 
+import {
+  DisplayControllerTrailContext,
+  DisplayHolderStackContext,
+  DisplayControllerActionsContext,
+  DisplayControllerDataContext,
+  DisplayHolderScrimContext,
+  DisplayHolderActionsContext,
+} from "./contexts";
 import { uuid } from "./utils";
-
-const OverlayTrailContext = createContext<string[]>([]);
-const StackContext = createContext([]);
-const StackScrimContext = createContext(false);
-const OverlayActionsContext = createContext({
-  bubble: (from: string, data: any) => {},
-  register: (name: string, trail: string[]) => () => {},
-  show: (target: string, data: any) => {},
-});
-const ControllerDataContext = createContext({});
 
 type HolderProps = {
   name?: string;
   ScrimComponent?: (() => ReactNode) | ComponentClass<any>;
 };
 
+const DefaultStartingPoint = "root";
+
 export function Holder(props: PropsWithChildren<HolderProps>) {
+  const trail = useContext(DisplayControllerTrailContext);
   const holderID = useMemo(() => {
-    return props.name ?? uuid();
-  }, [props.name]);
+    if (trail == null) {
+      return DefaultStartingPoint;
+    } else {
+      return props.name ?? uuid();
+    }
+  }, [props.name, trail]);
 
   /////// this is so you know the parent
-  const trail = useContext(OverlayTrailContext);
   const newTrail = useMemo(() => {
-    const _trail = trail.slice();
-    _trail.push(holderID);
-    return _trail;
+    if (holderID === DefaultStartingPoint || !Array.isArray(trail)) {
+      return [DefaultStartingPoint];
+    } else {
+      const _trail = trail.slice();
+      _trail.push(holderID);
+      return _trail;
+    }
   }, [trail, holderID]);
 
-  const { register, bubble } = useContext(OverlayActionsContext);
-  const controller = useContext(ControllerDataContext);
+  const { register, bubble } = useContext(DisplayControllerActionsContext);
+  const controller = useContext(DisplayControllerDataContext);
   const parentStack = controller[holderID];
 
   const shouldAccept = useRef(false);
@@ -47,15 +48,16 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
   const [localStack, setStack] = useState<any[]>([]);
 
   useEffect(() => {
-    const deregister = register(props.name, trail);
+    const deregister = register(holderID, trail);
     setIsRegistered(true);
 
     return () => {
       shouldAccept.current = false;
       deregister();
+      setIsRegistered(false);
       setStack([]);
     };
-  }, [trail]);
+  }, [trail, holderID]);
 
   /// when coming from above
   useEffect(() => {
@@ -75,7 +77,7 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
   }, [isRegistered, parentStack]);
 
   /// when directly talking
-  const holderActions = useMemo(() => {
+  const actions = useMemo(() => {
     return {
       push: (data: any) => {
         if (shouldAccept.current) {
@@ -104,24 +106,32 @@ export function Holder(props: PropsWithChildren<HolderProps>) {
   const shouldShowStackScrim = localStack.some((a) => a.showStackScrim);
 
   return (
-    <OverlayTrailContext.Provider value={newTrail}>
-      <StackScrimContext.Provider value={shouldShowStackScrim}>
-        <StackContext.Provider value={localStack}>
-          {props.children}
-        </StackContext.Provider>
-      </StackScrimContext.Provider>
-    </OverlayTrailContext.Provider>
+    <DisplayControllerTrailContext.Provider value={newTrail}>
+      <DisplayHolderScrimContext.Provider value={shouldShowStackScrim}>
+        <DisplayHolderStackContext.Provider value={localStack}>
+          <DisplayHolderActionsContext.Provider value={actions}>
+            {props.children}
+          </DisplayHolderActionsContext.Provider>
+        </DisplayHolderStackContext.Provider>
+      </DisplayHolderScrimContext.Provider>
+    </DisplayControllerTrailContext.Provider>
   );
 }
 
-const RootStart = ["root"];
-
-export class OverlayController extends React.Component<PropsWithChildren<any>> {
+export class OverlayController extends React.Component<
+  PropsWithChildren<any>,
+  {
+    currentOrder: string[];
+    holders: Record<string, string[] | null>;
+    data: Record<string, any>;
+  }
+> {
   //// static
   static show = () => {};
 
   //// instance
   state = {
+    currentOrder: [],
     holders: {},
     data: {},
   };
@@ -157,22 +167,31 @@ export class OverlayController extends React.Component<PropsWithChildren<any>> {
     });
   };
 
-  register = (name, trail) => {
+  register = (name, trail: null | string[]) => {
     this.setState((prevState) => {
-      const newHolders = {
-        ...prevState.holders,
-      };
-      if (!newHolders[name]) {
-        newHolders[name] = [];
-      } else {
-        newHolders[name] = newHolders[name].slice();
+      this.flags[name] = true;
+      let newOrder = prevState.currentOrder.slice();
+
+      const lastItemIndex = newOrder.length - 1;
+      for (let i = 0; i < 5; i++) {
+        const targIndex = lastItemIndex - i;
+
+        if (targIndex < 0) {
+          break;
+        }
+
+        if (newOrder[targIndex] == name) {
+          newOrder = newOrder.slice(0, targIndex);
+          break;
+        }
       }
 
-      newHolders[name].push(trail);
-
-      this.flags[name] = true;
       return {
-        holders: newHolders,
+        currentOrder: newOrder,
+        holders: {
+          ...prevState.holders,
+          [name]: trail,
+        },
       };
     });
 
@@ -180,10 +199,7 @@ export class OverlayController extends React.Component<PropsWithChildren<any>> {
       this.flags[name] = false;
 
       this.setState((prevState) => {
-        const newHolders = {
-          ...prevState.holders,
-        };
-        delete newHolders[name];
+        const { [name]: _, ...newHolders } = prevState.holders;
 
         return {
           holders: newHolders,
@@ -221,11 +237,12 @@ export class OverlayController extends React.Component<PropsWithChildren<any>> {
 
   render() {
     return (
-      <OverlayTrailContext.Provider value={RootStart}>
-        <OverlayActionsContext.Provider value={this.actions}>
+      <DisplayControllerActionsContext.Provider value={this.actions}>
+        {/** TODO: This kind of context will re-render all those who are listening **/}
+        <DisplayControllerDataContext.Provider value={this.state.data}>
           {this.props.children}
-        </OverlayActionsContext.Provider>
-      </OverlayTrailContext.Provider>
+        </DisplayControllerDataContext.Provider>
+      </DisplayControllerActionsContext.Provider>
     );
   }
 }
