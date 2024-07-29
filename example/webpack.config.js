@@ -6,7 +6,7 @@ module.exports = async (env, argv) => {
     {
       ...env,
       babel: {
-        dangerouslyAddModulePathsToTranspile: ['@marqroldan/react-native-overlay'],
+        dangerouslyAddModulePathsToTranspile: ['@marqroldan/react-native-display-controller'],
       },
     },
     argv

@@ -1,5 +1,5 @@
 {
-  "name": "@marqroldan/react-native-overlay",
+  "name": "@marqroldan/react-native-display-controller",
   "version": "0.1.0",
   "description": "Generic Overlay System in TypeScript",
   "main": "build/index.js",
@@ -18,7 +18,7 @@
   "keywords": [
     "react-native",
     "expo",
-    "@marqroldan/react-native-overlay",
+    "@marqroldan/react-native-display-controller",
     "RNOverlay"
   ],
   "repository": "https://github.com/marqroldan/react-native-overlay",

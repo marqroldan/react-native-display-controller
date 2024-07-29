@@ -19,7 +19,7 @@ config.resolver.nodeModulesPaths = [
 ];
 
 config.resolver.extraNodeModules = {
-  '@marqroldan/react-native-overlay': '..',
+  '@marqroldan/react-native-display-controller': '..',
 };
 
 config.watchFolders = [path.resolve(__dirname, '..')];

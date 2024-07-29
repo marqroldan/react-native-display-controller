@@ -3,8 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@marqroldan/react-native-overlay": ["../src/index"],
-      "@marqroldan/react-native-overlay/*": ["../src/*"]
+      "@marqroldan/react-native-display-controller": ["../src/index"],
+      "@marqroldan/react-native-display-controller/*": ["../src/*"]
     }
   }
 }
